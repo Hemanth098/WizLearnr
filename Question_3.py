@@ -1,7 +1,7 @@
 import json
 
 # Load JSON from file
-with open('habit_data.json', 'r') as f:
+with open('habit_tracker_simulation_5users_30days.json', 'r') as f:
     data = json.load(f)
 
 results = {}
