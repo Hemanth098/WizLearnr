@@ -1,38 +1,43 @@
 import json
+from collections import defaultdict
 
-# Load JSON from file
-with open('habit_tracker_simulation_5users_30days.json', 'r') as f:
-    data = json.load(f)
+# Load your JSON file
+with open("habit_tracker_simulation_5users_30days.json", "r") as file:
+    data = json.load(file)
 
-results = {}
+# Nested dictionary: user -> habit -> stats
+results = defaultdict(lambda: defaultdict(lambda: {
+    "days_completed": 0,
+    "days_skipped": 0
+}))
 
 # Process each entry
 for entry in data:
-    user = entry['user_id']
-    habit = entry['habit_name']
-    status = entry['status'].strip().lower()
+    user = entry["user"]
+    for log in entry["daily_log"]:
+        habit = log["habit"]
+        completed = log["completed"]
 
-    if user not in results:
-        results[user] = {}
+        if completed:
+            results[user][habit]["days_completed"] += 1
+        else:
+            results[user][habit]["days_skipped"] += 1
 
-    if habit not in results[user]:
-        results[user][habit] = {
-            "days_completed": 0,
-            "days_skipped": 0
+# Calculate success rate
+final_output = {}
+
+for user, habits in results.items():
+    final_output[user] = {}
+    for habit, stats in habits.items():
+        completed = stats["days_completed"]
+        skipped = stats["days_skipped"]
+        total = completed + skipped
+        success_rate = (completed / total) * 100 if total else 0.0
+        final_output[user][habit] = {
+            "days_completed": completed,
+            "days_skipped": skipped,
+            "success_rate": round(success_rate, 2)
         }
 
-    if status == "completed":
-        results[user][habit]["days_completed"] += 1
-    elif status == "skipped":
-        results[user][habit]["days_skipped"] += 1
-
-# Add success_rate
-for user in results:
-    for habit in results[user]:
-        comp = results[user][habit]["days_completed"]
-        skip = results[user][habit]["days_skipped"]
-        total = comp + skip
-        results[user][habit]["success_rate"] = round((comp / total) * 100, 2) if total else 0.0
-
 # Output result
-print(json.dumps(results, indent=2))
+print(json.dumps(final_output, indent=2))
